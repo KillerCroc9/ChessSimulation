@@ -15,10 +15,11 @@ void AChessBoard::BeginPlay()
 {
 	Super::BeginPlay();
 	// Call once per second
-	GetWorld()->GetTimerManager().SetTimer(BoardUpdateTimer, this, &AChessBoard::RequestBoardUpdate, 1.0f, true);
+	GetWorld()->GetTimerManager().SetTimer(BoardUpdateTimer, this, &AChessBoard::RequestBoardUpdate, 1.5f, true);
 	// Set up recurring timer to fetch new board updates every 1 second
 	// Store all pieces in TMap
 	// StorePiecesInTMap();
+	//RequestBoardUpdate(); // Initial request to get the board state
 }
 
 void AChessBoard::StorePiecesInTMap()
@@ -43,6 +44,18 @@ void AChessBoard::Tick(float DeltaTime)
 	// Optional: Periodically request board updates
 }
 
+void AChessBoard::DestroyCall()
+{
+	for (AActor* Actor : SpawnedArray)
+	{
+		if (Actor)
+		{
+			Actor->Destroy();
+		}
+	}
+	SpawnedArray.Empty();
+}
+
 void AChessBoard::RequestBoardUpdate()
 {
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
@@ -51,7 +64,6 @@ void AChessBoard::RequestBoardUpdate()
 	Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
 	Request->OnProcessRequestComplete().BindUObject(this, &AChessBoard::OnBoardDataReceived);
 	Request->ProcessRequest();
-	DestroyCall();
 	SendAcknowledgementToServer();
 }
 
@@ -118,6 +130,8 @@ void AChessBoard::OnBoardDataReceived(FHttpRequestPtr Request, FHttpResponsePtr 
 
 void AChessBoard::UpdateBoardFromArray(const TArray<TArray<TArray<int32>>>& BoardArray)
 {
+	DestroyCall();
+
 	UE_LOG(LogTemp, Warning, TEXT("Received board update with %d channels"), BoardArray.Num());
 
 	if (BoardArray.Num() == 0) return;
@@ -176,10 +190,11 @@ void AChessBoard::UpdateBoardFromArray(const TArray<TArray<TArray<int32>>>& Boar
 				if (MeshComponent && PieceMesh)
 				{
 					MeshComponent->SetStaticMesh(PieceMesh);
+					SpawnedArray.Add(SpawnedPiece);
 				}
 			}
 		}
 	}
-
 	UE_LOG(LogTemp, Warning, TEXT("Board updated with newly spawned pieces."));
+	//RequestBoardUpdate(); // Request the next update
 }
