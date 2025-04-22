@@ -81,7 +81,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Chess Pieces")
 	TSubclassOf<AActor> KingActorClass;
 
-	UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION()
 	void DestroyCall();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chess")
@@ -98,4 +98,5 @@ private:
 	void UpdateBoardFromArray(const TArray<TArray<TArray<int32>>>& BoardArray);
 	FTimerHandle BoardUpdateTimer;
 	FString JsonString;
+	TArray<AActor*> SpawnedArray;
 };
